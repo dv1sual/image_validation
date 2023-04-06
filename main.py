@@ -43,20 +43,36 @@ def validate_color_chart(image, chart_values):
     validation_result = True
     opencv_image = np.array(image)
 
+    results = []
     for color_patch in chart_values:
         x, y, expected_rgb = color_patch['x'], color_patch['y'], color_patch['rgb']
         actual_rgb = opencv_image[y, x]
         accuracy = calculate_accuracy(expected_rgb, actual_rgb)
 
         if accuracy < 99.99:
-            print(colored("[CHECK] - Color patch {} failed validation with accuracy {:.2f}%".format(color_patch, accuracy), "red"))
             validation_result = False
+
+        results.append((color_patch, accuracy))
+
+    for color_patch, accuracy in results:
+        if accuracy < 99.99:
+            print(colored("[CHECK] - Color patch {} failed validation with accuracy {:.2f}%".format(color_patch, accuracy), "red"))
         else:
             print(colored("[CHECK] - Color patch {} passed validation with accuracy {:.2f}%".format(color_patch, accuracy), "green"))
 
-        time.sleep(3)
+        time.sleep(2)
+
+    passed_checks = [result for result in results if result[1] >= 99.99]
+    failed_checks = [result for result in results if result[1] < 99.99]
+    overall_accuracy = sum(result[1] for result in results) / len(results)
+
+    print("\nValidation Summary:")
+    print(f"Passed checks: {len(passed_checks)}")
+    print(f"Failed checks: {len(failed_checks)}")
+    print(f"Overall accuracy: {overall_accuracy:.2f}%\n")
 
     return validation_result
+
 
 
 def calculate_accuracy(expected_rgb, actual_rgb):
