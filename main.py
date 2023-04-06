@@ -69,10 +69,48 @@ def calculate_accuracy(expected_rgb, actual_rgb):
     return accuracy
 
 
+def visualize_color_chart(image, chart_values, output_filename):
+    # Create a blank canvas with a white background
+    canvas_height = (len(chart_values) * 100) + (len(chart_values) * 20)
+    canvas = np.ones((canvas_height, 400, 3), dtype=np.uint8) * 255
+
+    # Iterate through the color patches
+    for idx, color_patch in enumerate(chart_values):
+        x, y, expected_rgb = color_patch['x'], color_patch['y'], color_patch['rgb']
+        actual_rgb = tuple(map(int, image[y, x]))
+        accuracy = calculate_accuracy(expected_rgb, actual_rgb)
+
+        # Calculate the position of the color patches on the canvas
+        top = idx * 120
+        bottom = top + 100
+
+        # Draw the expected and actual color patches side by side
+        cv2.rectangle(canvas, (50, top), (150, bottom), tuple(expected_rgb[::-1]), -1)
+        cv2.rectangle(canvas, (250, top), (350, bottom), tuple(actual_rgb[::-1]), -1)
+
+        # Highlight the patches with a border (green for pass, red for fail)
+        border_color = (0, 255, 0) if accuracy >= 99.99 else (0, 0, 255)
+        cv2.rectangle(canvas, (50, top), (150, bottom), border_color, 2)
+        cv2.rectangle(canvas, (250, top), (350, bottom), border_color, 2)
+
+    # Save the visualization to a file
+    cv2.imwrite(output_filename, canvas)
+
+
 def main():
     # Load the image from a file
-    image = load_image('image_charts/chart_1920_1080.tif')  # Replace with the actual file path
+    input_image_path = 'image_charts/RGB_1920_1080.tif'
+    image = load_image(input_image_path)
     validation_result = validate_color_chart(image, color_chart_values)
+
+    # Create the output filename and save the visualization to a specific folder
+    input_filename = os.path.basename(input_image_path)
+    output_filename = os.path.splitext(input_filename)[0] + '_results.png'
+    output_folder = 'results'
+    os.makedirs(output_folder, exist_ok=True)
+    output_path = os.path.join(output_folder, output_filename)
+
+    visualize_color_chart(np.array(image), color_chart_values, output_path)
 
     if validation_result:
         print(colored_info('Color chart validation passed successfully'))
@@ -82,4 +120,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
