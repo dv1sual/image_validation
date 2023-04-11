@@ -74,7 +74,6 @@ def validate_color_chart(image, chart_values):
     return validation_result
 
 
-
 def calculate_accuracy(expected_rgb, actual_rgb):
     """
     Calculates the accuracy between two RGB values.
@@ -84,6 +83,12 @@ def calculate_accuracy(expected_rgb, actual_rgb):
     accuracy = 100 - (np.mean(differences / max_differences) * 100)
     return accuracy
 
+
+def put_vertical_text(img, text, org, font, font_scale, color, thickness):
+    y = org[1]
+    for value in text:
+        cv2.putText(img, str(value), (org[0], y), font, font_scale, color, thickness)
+        y += int(cv2.getTextSize(str(value), font, font_scale, thickness)[0][1] * 1.5)
 
 def visualize_color_chart(image, chart_values, output_filename):
     # Create a blank canvas with a white background
@@ -108,6 +113,14 @@ def visualize_color_chart(image, chart_values, output_filename):
         border_color = (0, 255, 0) if accuracy >= 99.99 else (0, 0, 255)
         cv2.rectangle(canvas, (50, top), (150, bottom), border_color, 2)
         cv2.rectangle(canvas, (250, top), (350, bottom), border_color, 2)
+
+        # Add the expected and actual RGB values as vertical text
+        text_color = (0, 0, 0)
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = 0.5
+        font_thickness = 1
+        put_vertical_text(canvas, expected_rgb, (155, top + 20), font, font_scale, text_color, font_thickness)
+        put_vertical_text(canvas, actual_rgb, (355, top + 20), font, font_scale, text_color, font_thickness)
 
     # Save the visualization to a file
     cv2.imwrite(output_filename, canvas)
