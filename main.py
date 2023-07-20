@@ -3,7 +3,7 @@ import numpy as np
 from termcolor import colored
 from colorama import init, Fore
 from PIL import Image
-from color_chart_values import color_chart_values
+from color_charts_values.RGB_color_chart_values import color_chart_values
 import os
 import time
 
@@ -89,6 +89,7 @@ def put_vertical_text(img, text, org, font, font_scale, color, thickness):
     for value in text:
         cv2.putText(img, str(value), (org[0], y), font, font_scale, color, thickness)
         y += int(cv2.getTextSize(str(value), font, font_scale, thickness)[0][1] * 1.5)
+
 
 def visualize_color_chart(image, chart_values, output_filename):
     # Create a blank canvas with a white background
