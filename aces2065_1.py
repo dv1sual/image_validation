@@ -51,9 +51,7 @@ def load_image(image_path):
         print(type(image))
         image = np.array(image) / 255.0  # Convert the non-EXR images to floating-point values in the 0-1 range
 
-    time.sleep(2)
     logger.info(f"Color checking starting...")
-    time.sleep(2)
 
     return image
 
