@@ -29,27 +29,27 @@ def load_image(image_path):
     if image_path.lower().endswith(".exr"):
         # Code for loading EXR files
         logger.debug(f"Loading EXR file: {image_path}")
-        exr_file = OpenEXR.InputFile(image_path)
-        dw = exr_file.header()['dataWindow']
-        size = (dw.max.x - dw.min.x + 1, dw.max.y - dw.min.y + 1)
+        exr_file = OpenEXR.InputFile(image_path)  # This line uses the OpenEXR library to open the EXR file.
+        dw = exr_file.header()['dataWindow']  # This retrieves the 'dataWindow' property from the header of the EXR file. This property contains information about the image's dimensions.
+        size = (dw.max.x - dw.min.x + 1, dw.max.y - dw.min.y + 1)  # This line calculates the width and height of the image based on the 'dataWindow' property.
 
-        pt = Imath.PixelType(Imath.PixelType.FLOAT)
-        r_str = exr_file.channel('R', pt)
+        pt = Imath.PixelType(Imath.PixelType.FLOAT)  # This sets up a pixel type object representing a floating point pixel. This is used to tell OpenEXR how to interpret the pixel data.
+        r_str = exr_file.channel('R', pt)  # These lines extract the red, green, and blue color channels from the EXR file
         g_str = exr_file.channel('G', pt)
         b_str = exr_file.channel('B', pt)
 
-        r_channel = np.frombuffer(r_str, dtype=np.float32).reshape((size[1], size[0]))
+        r_channel = np.frombuffer(r_str, dtype=np.float32).reshape((size[1], size[0]))  # These lines take the raw data from the color channels, interpret it as 32-bit floating point numbers, and reshape it into 2D arrays that match the dimensions of the image.
         g_channel = np.frombuffer(g_str, dtype=np.float32).reshape((size[1], size[0]))
         b_channel = np.frombuffer(b_str, dtype=np.float32).reshape((size[1], size[0]))
 
-        image = np.dstack((r_channel, g_channel, b_channel))
+        image = np.dstack((r_channel, g_channel, b_channel))  # This stacks the 2D arrays for the red, green, and blue color channels together along a third dimension to create a 3D array representing the image.
         logger.info(f"Successfully loaded {filename}")
     else:
         # Code for loading non-EXR files
         logger.debug(f"Loading non-EXR file: {image_path}")
         image = Image.open(image_path)
         print(type(image))
-        image = np.array(image) / 255.0  # Convert the non-EXR images to floating-point values in the 0-1 range
+        image = np.array(image) / 255.0  # Converts the image data to a numpy array and scales the pixel values from 0-255 to 0-1 by dividing by 255.
 
     logger.info(f"Color checking starting...")
 
