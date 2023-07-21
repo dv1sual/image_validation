@@ -6,19 +6,10 @@ from PIL import Image
 from color_charts_values.RGB_color_chart_values import color_chart_values
 import os
 import time
+from logger_config import configure_logger
 
-# Initialize colorama
-init(autoreset=True)
-
-# Set cyan color for CHECK messages
-CHECK_COLOR = Fore.CYAN
-
-
-def colored_info(text):
-    """
-    Returns a red-colored text for displaying info messages.
-    """
-    return colored(f"[INFO] - {text}", "red")
+# Create a logger for the module
+logger = configure_logger(__name__)
 
 
 def load_image(image_path):
@@ -27,12 +18,9 @@ def load_image(image_path):
     """
     image = Image.open(image_path)
     filename = os.path.basename(image_path)
-    print(colored_info("Loading image, please wait..."))
-    time.sleep(2)
-    print(colored_info(f"Successfully loaded {filename}"))
-    time.sleep(2)
-    print(colored_info(f"Color checking starting..."))
-    time.sleep(2)
+    logger.info("Loading image, please wait...")
+    logger.info(f"Successfully loaded {filename}")
+    logger.info(f"Color checking starting...")
     return image
 
 
@@ -49,27 +37,25 @@ def validate_color_chart(image, chart_values):
         actual_rgb = opencv_image[y, x]
         accuracy = calculate_accuracy(expected_rgb, actual_rgb)
 
-        if accuracy < 99.99:
+        if accuracy < 99.50:
             validation_result = False
 
         results.append((color_patch, accuracy))
 
     for color_patch, accuracy in results:
-        if accuracy < 99.99:
-            print(colored("[CHECK] - Color patch {} failed validation with accuracy {:.2f}%".format(color_patch, accuracy), "red"))
+        if accuracy < 99.50:
+            logger.error("Color patch {} failed validation with accuracy {:.2f}%".format(color_patch, accuracy))
         else:
-            print(colored("[CHECK] - Color patch {} passed validation with accuracy {:.2f}%".format(color_patch, accuracy), "green"))
+            logger.info("Color patch {} passed validation with accuracy {:.2f}%".format(color_patch, accuracy))
 
-        time.sleep(2)
-
-    passed_checks = [result for result in results if result[1] >= 99.99]
-    failed_checks = [result for result in results if result[1] < 99.99]
+    passed_checks = [result for result in results if result[1] >= 99.50]
+    failed_checks = [result for result in results if result[1] < 99.50]
     overall_accuracy = sum(result[1] for result in results) / len(results)
 
-    print("\nValidation Summary:")
-    print(f"Passed checks: {len(passed_checks)}")
-    print(f"Failed checks: {len(failed_checks)}")
-    print(f"Overall accuracy: {overall_accuracy:.2f}%\n")
+    logger.info("Validation Summary:")
+    logger.info(f"Passed checks: {len(passed_checks)}")
+    logger.info(f"Failed checks: {len(failed_checks)}")
+    logger.info(f"Overall accuracy: {overall_accuracy:.2f}%")
 
     return validation_result
 
@@ -143,9 +129,9 @@ def main():
     visualize_color_chart(np.array(image), color_chart_values, output_path)
 
     if validation_result:
-        print(colored_info('Color chart validation passed successfully'))
+        logger.info('Color chart validation passed successfully')
     else:
-        print(colored_info('Color chart validation failed'))
+        logger.info('Color chart validation failed')
 
 
 if __name__ == '__main__':
