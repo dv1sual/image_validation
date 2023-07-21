@@ -3,7 +3,6 @@ import numpy as np
 from PIL import Image
 from color_charts_values.RGB_color_chart_values import color_chart_values
 import os
-import time
 from logger_config import configure_logger
 
 # Create a logger for the module
@@ -16,6 +15,7 @@ def load_image(image_path):
     """
     image = Image.open(image_path)
     filename = os.path.basename(image_path)
+    logger.info("RGB Color Check")
     logger.info("Loading image, please wait...")
     logger.info(f"Successfully loaded {filename}")
     logger.info(f"Color checking starting...")

@@ -1,11 +1,9 @@
 import cv2  # For image processing
 import numpy as np  # For array operations
-from PIL import Image  # For opening image files
 import OpenEXR  # For opening EXR files
 import Imath  # For handling EXR files
 from color_charts_values.itu_r_bt_2020_color_chart_values import itu_r_bt_2020_color_chart_values
 import os  # For handling file paths
-import time  # For creating delays in the script
 from logger_config import configure_logger
 
 
@@ -21,8 +19,8 @@ def load_image(image_path):
     :return: A numpy array of the image data.
     """
     filename = os.path.basename(image_path)
+    logger.info("ITU-BT2020 Color Check")
     logger.info("Loading image, please wait...")  # Log info message
-    time.sleep(2)
 
     # Check if file is an EXR file
     if image_path.lower().endswith(".exr"):
