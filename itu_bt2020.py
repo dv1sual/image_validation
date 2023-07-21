@@ -3,7 +3,7 @@ import numpy as np  # For array operations
 from PIL import Image  # For opening image files
 import OpenEXR  # For opening EXR files
 import Imath  # For handling EXR files
-from color_charts_values.aces2065_1_color_chart_values import aces2065_1_color_chart_values  # Importing ACES color chart values
+from color_charts_values.itu_r_bt_2020_color_chart_values import itu_r_bt_2020_color_chart_values
 import os  # For handling file paths
 import time  # For creating delays in the script
 from logger_config import configure_logger
@@ -208,11 +208,11 @@ def main():
     """
 
     # Load the image from a file
-    input_image_path = 'image_charts/ACES2065_1_1920_1080.exr'
+    input_image_path = 'image_charts/ITU-R_BT.2020.exr'
     image = load_image(input_image_path)
 
-    if "ACES2065_1" in input_image_path:
-        chart_values = aces2065_1_color_chart_values
+    if "ITU-R_BT.2020" in input_image_path:
+        chart_values = itu_r_bt_2020_color_chart_values
     else:
         chart_values = color_chart_values
 
