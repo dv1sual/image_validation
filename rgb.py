@@ -1,7 +1,5 @@
 import cv2
 import numpy as np
-from termcolor import colored
-from colorama import init, Fore
 from PIL import Image
 from color_charts_values.RGB_color_chart_values import color_chart_values
 import os
