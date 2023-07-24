@@ -4,7 +4,7 @@ from PIL import Image  # For image processing
 import OpenEXR  # For opening EXR files
 import Imath  # For handling EXR files
 import os  # For handling file paths
-import logging
+import logging  # For logging
 from utils.logger_config import configure_logger  # For logging configuration
 import json  # For handling JSON files
 
@@ -22,8 +22,13 @@ class ColorChecker:
         self.image_path = image_path
         self.color_space = color_space
         self.logger = self.configure_logger(color_space)
-        with open('color_charts_values/color_chart_values.json', 'r') as file:
-            self.color_charts = json.load(file)
+
+        try:
+            with open('color_charts_values/color_chart_values.json', 'r') as file:
+                self.color_charts = json.load(file)
+        except Exception as e:
+            self.logger.error(f"Failed to load color chart values: {str(e)}")
+            raise
 
     @staticmethod
     def load_exr_image(image_path):
@@ -61,22 +66,26 @@ class ColorChecker:
         :raises FileNotFoundError: If the image file does not exist.
         :raises ValueError: If the image file is not an EXR file.
         """
-        if not os.path.isfile(image_path):
-            raise FileNotFoundError(f"The image file {image_path} does not exist.")
+        try:
+            if not os.path.isfile(image_path):
+                raise FileNotFoundError(f"The image file {image_path} does not exist.")
 
-        filename = os.path.basename(image_path)
-        logger.info("ACES2065_1 Color Check")
-        logger.info("Loading image...")
+            filename = os.path.basename(image_path)
+            logger.info("ACES2065_1 Color Check")
+            logger.info("Loading image...")
 
-        if image_path.lower().endswith(".exr"):
-            image = self.load_exr_image(image_path)
-            logger.info(f"Successfully loaded {filename}")
-        else:
-            logger.error(f"Loading non-EXR file for ACES: {image_path}")
-            raise ValueError(f"Non-EXR file provided for ACES color chart: {image_path}")
+            if image_path.lower().endswith(".exr"):
+                image = self.load_exr_image(image_path)
+                logger.info(f"Successfully loaded {filename}")
+            else:
+                logger.error(f"Loading non-EXR file for ACES: {image_path}")
+                raise ValueError(f"Non-EXR file provided for ACES color chart: {image_path}")
 
-        logger.info("Color checking starting...")
-        return image
+            logger.info("Color checking starting...")
+            return image
+        except Exception as e:
+            logger.error(f"Failed to load ACES image: {str(e)}")
+            raise
 
     def load_image_itu2020(self, image_path, logger):
         """
@@ -93,22 +102,26 @@ class ColorChecker:
         :raises FileNotFoundError: If the image file does not exist.
         :raises ValueError: If the image file is not an EXR file.
         """
-        if not os.path.isfile(image_path):
-            raise FileNotFoundError(f"The image file {image_path} does not exist.")
+        try:
+            if not os.path.isfile(image_path):
+                raise FileNotFoundError(f"The image file {image_path} does not exist.")
 
-        filename = os.path.basename(image_path)
-        logger.info("ITU-R_BT.2020 Color Check")
-        logger.info("Loading image...")
+            filename = os.path.basename(image_path)
+            logger.info("ITU-R_BT.2020 Color Check")
+            logger.info("Loading image...")
 
-        if image_path.lower().endswith(".exr"):
-            image = self.load_exr_image(image_path)
-            logger.info(f"Successfully loaded {filename}")
-        else:
-            logger.error(f"Loading non-EXR file for ACES: {image_path}")
-            raise ValueError(f"Non-EXR file provided for ACES color chart: {image_path}")
+            if image_path.lower().endswith(".exr"):
+                image = self.load_exr_image(image_path)
+                logger.info(f"Successfully loaded {filename}")
+            else:
+                logger.error(f"Loading non-EXR file for ITU2020: {image_path}")
+                raise ValueError(f"Non-EXR file provided for ITU2020 color chart: {image_path}")
 
-        logger.info("Color checking starting...")
-        return image
+            logger.info("Color checking starting...")
+            return image
+        except Exception as e:
+            logger.error(f"Failed to load ITU2020 image: {str(e)}")
+            raise
 
     def load_image_itu709(self, image_path, logger):
         """
@@ -125,22 +138,26 @@ class ColorChecker:
         :raises FileNotFoundError: If the image file does not exist.
         :raises ValueError: If the image file is not an EXR file.
         """
-        if not os.path.isfile(image_path):
-            raise FileNotFoundError(f"The image file {image_path} does not exist.")
+        try:
+            if not os.path.isfile(image_path):
+                raise FileNotFoundError(f"The image file {image_path} does not exist.")
 
-        filename = os.path.basename(image_path)
-        logger.info("ITU-R_BT.709 Color Check")
-        logger.info("Loading image...")
+            filename = os.path.basename(image_path)
+            logger.info("ITU-R_BT.709 Color Check")
+            logger.info("Loading image...")
 
-        if image_path.lower().endswith(".exr"):
-            image = self.load_exr_image(image_path)
-            logger.info(f"Successfully loaded {filename}")
-        else:
-            logger.error(f"Loading non-EXR file for ACES: {image_path}")
-            raise ValueError(f"Non-EXR file provided for ACES color chart: {image_path}")
+            if image_path.lower().endswith(".exr"):
+                image = self.load_exr_image(image_path)
+                logger.info(f"Successfully loaded {filename}")
+            else:
+                logger.error(f"Loading non-EXR file for ITU709: {image_path}")
+                raise ValueError(f"Non-EXR file provided for ITU709 color chart: {image_path}")
 
-        logger.info("Color checking starting...")
-        return image
+            logger.info("Color checking starting...")
+            return image
+        except Exception as e:
+            logger.error(f"Failed to load ITU709 image: {str(e)}")
+            raise
 
     @staticmethod
     def load_image_rgb(image_path, logger):
@@ -158,14 +175,14 @@ class ColorChecker:
         :raises FileNotFoundError: If the image file does not exist.
         :raises Exception: If an error occurred during loading the image.
         """
-        if not os.path.isfile(image_path):
-            raise FileNotFoundError(f"The image file {image_path} does not exist.")
-
-        filename = os.path.basename(image_path)
-        logger.info("RGB Color Check")
-        logger.info("Loading image, please wait...")
-
         try:
+            if not os.path.isfile(image_path):
+                raise FileNotFoundError(f"The image file {image_path} does not exist.")
+
+            filename = os.path.basename(image_path)
+            logger.info("RGB Color Check")
+            logger.info("Loading image, please wait...")
+
             image = Image.open(image_path)
             image = np.array(image)  # convert PIL Image to numpy array
             # Normalize the image array values to the range 0.0 - 1.0 if they aren't already
@@ -251,46 +268,50 @@ class ColorChecker:
         :return: A tuple containing the number of colors that passed, the number that failed, the overall accuracy, and the updated chart values.
         :rtype: tuple
         """
-        passed, failed, total_accuracy = 0, 0, 0
+        try:
+            passed, failed, total_accuracy = 0, 0, 0
 
-        for value in chart_values:
-            if not all(key in value for key in ["rgb", "x", "y"]):
-                raise ValueError("Each color patch dictionary must have 'rgb', 'x', and 'y' keys.")
+            for value in chart_values:
+                if not all(key in value for key in ["rgb", "x", "y"]):
+                    raise ValueError("Each color patch dictionary must have 'rgb', 'x', and 'y' keys.")
 
-            expected_rgb = np.array(value["rgb"])
-            x, y = value["x"], value["y"]
-            actual_rgb = image[y, x]
+                expected_rgb = np.array(value["rgb"])
+                x, y = value["x"], value["y"]
+                actual_rgb = image[y, x]
 
-            # Calculate the Euclidean distance between the expected and actual RGB values
-            distance = np.linalg.norm(expected_rgb - actual_rgb)
+                # Calculate the Euclidean distance between the expected and actual RGB values
+                distance = np.linalg.norm(expected_rgb - actual_rgb)
 
-            # The maximum possible distance is the distance from black (0, 0, 0) to white (255, 255, 255)
-            max_distance = np.linalg.norm([255, 255, 255])
+                # The maximum possible distance is the distance from black (0, 0, 0) to white (255, 255, 255)
+                max_distance = np.linalg.norm([255, 255, 255])
 
-            # Calculate accuracy as 1 - (distance / max_distance)
-            accuracy = 1 - (distance / max_distance)
+                # Calculate accuracy as 1 - (distance / max_distance)
+                accuracy = 1 - (distance / max_distance)
 
-            value["accuracy"] = accuracy
-            if accuracy >= (1 - tolerance):
-                passed += 1
-                total_accuracy += accuracy
-            else:
-                failed += 1
+                value["accuracy"] = accuracy
+                if accuracy >= (1 - tolerance):
+                    passed += 1
+                    total_accuracy += accuracy
+                else:
+                    failed += 1
 
-            logger.info(f"Color name: {value.get('name', 'Unknown')}")
-            logger.info(f"Expected RGB: {expected_rgb}")
-            logger.info(f"Actual RGB: {actual_rgb}")
-            logger.info(f"Accuracy: {accuracy:.2%}")
+                logger.info(f"Color name: {value.get('name', 'Unknown')}")
+                logger.info(f"Expected RGB: {expected_rgb}")
+                logger.info(f"Actual RGB: {actual_rgb}")
+                logger.info(f"Accuracy: {accuracy:.2%}")
 
-        overall_accuracy = total_accuracy / len(chart_values)
-        logger.info(f"Passed checks: {passed}")
-        logger.info(f"Failed checks: {failed}")
-        logger.info(f"Overall accuracy: {overall_accuracy:.2%}")
+            overall_accuracy = total_accuracy / len(chart_values)
+            logger.info(f"Passed checks: {passed}")
+            logger.info(f"Failed checks: {failed}")
+            logger.info(f"Overall accuracy: {overall_accuracy:.2%}")
 
-        # Create a visualisation for the current color space
-        self.visualize_color_chart(image, chart_values, color_space, image_path)
+            # Create a visualisation for the current color space
+            self.visualize_color_chart(image, chart_values, color_space, image_path)
 
-        return passed, failed, overall_accuracy, chart_values
+            return passed, failed, overall_accuracy, chart_values
+        except Exception as e:
+            logger.error(f"Failed to validate color chart: {str(e)}")
+            raise
 
     @staticmethod
     def configure_logger(color_space):
