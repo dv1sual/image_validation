@@ -11,8 +11,13 @@ def configure_logger(name, log_filename):
 
     # Make sure we don't have duplicate handlers if executed more times
     if not logger.handlers:
+        # Create logs directory if it doesn't exist
+        script_dir = os.path.dirname(os.path.realpath(__file__))
+        log_directory = os.path.join(script_dir, '../logs')
+        os.makedirs(log_directory, exist_ok=True)
+
         # Create file handler which logs even debug messages
-        fh = logging.FileHandler(os.path.join('logs', log_filename), mode='w')
+        fh = logging.FileHandler(os.path.join(log_directory, log_filename), mode='w')
         fh.setLevel(logging.INFO)
 
         # Create console handler with a higher log level
@@ -29,4 +34,5 @@ def configure_logger(name, log_filename):
         logger.addHandler(ch)
 
     return logger
+
 

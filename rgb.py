@@ -2,7 +2,7 @@ import cv2  # For image processing
 import numpy as np  # For array operations
 from PIL import Image  # For image processing
 import os  # For handling file paths
-from logger_config import configure_logger  # For logging configuration
+from utils.logger_config import configure_logger  # For logging configuration
 import json  # For handling JSON files
 
 # Create a logger for the module

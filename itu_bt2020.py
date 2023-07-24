@@ -3,7 +3,7 @@ import numpy as np  # For array operations
 import OpenEXR  # For opening EXR files
 import Imath  # For handling EXR files
 import os  # For handling file paths
-from logger_config import configure_logger  # For logging configuration
+from utils.logger_config import configure_logger  # For logging configuration
 import json  # For handling JSON files
 
 logger = configure_logger('itu2020', 'itu2020.log')
