@@ -9,9 +9,6 @@ from utils.logger_config import configure_logger  # For logging configuration
 import json  # For handling JSON files
 
 
-logger = logging.getLogger()
-
-
 # Load color chart values from a JSON file
 with open('color_charts_values/color_chart_values.json', 'r') as file:
     color_charts = json.load(file)
@@ -22,10 +19,22 @@ itu_r_bt_709_color_chart_values = color_charts['itu_r_bt_709_color_chart_values'
 rgb_color_chart_values = color_charts['RGB_color_chart_values']
 
 
-def load_image_aces(image_path):
+def load_exr_image(image_path):
+    """Load an EXR image file and return it as a numpy array."""
+    exr_file = OpenEXR.InputFile(image_path)
+    dw = exr_file.header()['dataWindow']
+    size = (dw.max.x - dw.min.x + 1, dw.max.y - dw.min.y + 1)
+
+    pt = Imath.PixelType(Imath.PixelType.FLOAT)
+    r_str, g_str, b_str = exr_file.channel('R', pt), exr_file.channel('G', pt), exr_file.channel('B', pt)
+
+    r_channel, g_channel, b_channel = [np.frombuffer(channel_str, dtype=np.float32).reshape((size[1], size[0])) for
+                                       channel_str in [r_str, g_str, b_str]]
+    return np.dstack((r_channel, g_channel, b_channel))
+
+
+def load_image_aces(image_path, logger):
     """Load an ACES image file and return it as a numpy array."""
-    global logger
-    logger = configure_logger('aces2065_1')
     if not os.path.isfile(image_path):
         raise FileNotFoundError(f"The image file {image_path} does not exist.")
 
@@ -34,16 +43,7 @@ def load_image_aces(image_path):
     logger.info("Loading image...")
 
     if image_path.lower().endswith(".exr"):
-        exr_file = OpenEXR.InputFile(image_path)
-        dw = exr_file.header()['dataWindow']
-        size = (dw.max.x - dw.min.x + 1, dw.max.y - dw.min.y + 1)
-
-        pt = Imath.PixelType(Imath.PixelType.FLOAT)
-        r_str, g_str, b_str = exr_file.channel('R', pt), exr_file.channel('G', pt), exr_file.channel('B', pt)
-
-        r_channel, g_channel, b_channel = [np.frombuffer(channel_str, dtype=np.float32).reshape((size[1], size[0])) for
-                                           channel_str in [r_str, g_str, b_str]]
-        image = np.dstack((r_channel, g_channel, b_channel))
+        image = load_exr_image(image_path)
         logger.info(f"Successfully loaded {filename}")
     else:
         logger.error(f"Loading non-EXR file for ACES: {image_path}")
@@ -53,76 +53,52 @@ def load_image_aces(image_path):
     return image
 
 
-def load_image_itu2020(image_path):
+def load_image_itu2020(image_path, logger):
     """
     Load an ITU2020 image using OpenEXR and PIL, and print info messages.
     """
-    global logger
-    logger = configure_logger('itu2020')
     if not os.path.isfile(image_path):
         raise FileNotFoundError(f"The image file {image_path} does not exist.")
 
     filename = os.path.basename(image_path)
-    logger.info("ITU_BT2020 Color Check")
+    logger.info("ITU-R_BT.2020 Color Check")
     logger.info("Loading image...")
 
     if image_path.lower().endswith(".exr"):
-        exr_file = OpenEXR.InputFile(image_path)
-        dw = exr_file.header()['dataWindow']
-        size = (dw.max.x - dw.min.x + 1, dw.max.y - dw.min.y + 1)
-
-        pt = Imath.PixelType(Imath.PixelType.FLOAT)
-        r_str, g_str, b_str = exr_file.channel('R', pt), exr_file.channel('G', pt), exr_file.channel('B', pt)
-
-        r_channel, g_channel, b_channel = [np.frombuffer(channel_str, dtype=np.float32).reshape((size[1], size[0])) for
-                                           channel_str in [r_str, g_str, b_str]]
-        image = np.dstack((r_channel, g_channel, b_channel))
+        image = load_exr_image(image_path)
         logger.info(f"Successfully loaded {filename}")
     else:
-        logger.info(f"Loading non-EXR file: {image_path}")
-        image = np.array(Image.open(image_path)) / 255.0
+        logger.error(f"Loading non-EXR file for ACES: {image_path}")
+        raise ValueError(f"Non-EXR file provided for ACES color chart: {image_path}")
 
     logger.info("Color checking starting...")
     return image
 
 
-def load_image_itu709(image_path):
+def load_image_itu709(image_path, logger):
     """Load an ITU-R BT.709 image file and return it as a numpy array."""
-    global logger
-    logger = configure_logger('itu709')
     if not os.path.isfile(image_path):
         raise FileNotFoundError(f"The image file {image_path} does not exist.")
 
     filename = os.path.basename(image_path)
-    logger.info("ITU-R BT.709 Color Check")
+    logger.info("ITU-R_BT.709 Color Check")
     logger.info("Loading image...")
 
     if image_path.lower().endswith(".exr"):
-        exr_file = OpenEXR.InputFile(image_path)
-        dw = exr_file.header()['dataWindow']
-        size = (dw.max.x - dw.min.x + 1, dw.max.y - dw.min.y + 1)
-
-        pt = Imath.PixelType(Imath.PixelType.FLOAT)
-        r_str, g_str, b_str = exr_file.channel('R', pt), exr_file.channel('G', pt), exr_file.channel('B', pt)
-
-        r_channel, g_channel, b_channel = [np.frombuffer(channel_str, dtype=np.float32).reshape((size[1], size[0])) for
-                                           channel_str in [r_str, g_str, b_str]]
-        image = np.dstack((r_channel, g_channel, b_channel))
+        image = load_exr_image(image_path)
         logger.info(f"Successfully loaded {filename}")
     else:
-        logger.error(f"Loading non-EXR file for ITU-R BT.709: {image_path}")
-        raise ValueError(f"Non-EXR file provided for ITU-R BT.709 color chart: {image_path}")
+        logger.error(f"Loading non-EXR file for ACES: {image_path}")
+        raise ValueError(f"Non-EXR file provided for ACES color chart: {image_path}")
 
     logger.info("Color checking starting...")
     return image
 
 
-def load_image_rgb(image_path):
+def load_image_rgb(image_path, logger):
     """
     Load an RGB image using PIL and print info messages.
     """
-    global logger
-    logger = configure_logger('rgb')
     if not os.path.isfile(image_path):
         raise FileNotFoundError(f"The image file {image_path} does not exist.")
 
@@ -180,7 +156,7 @@ def visualize_color_chart(image, chart_values, color_space, image_path):
     cv2.imwrite(output_path, canvas_vis)
 
 
-def validate_color_chart(image, chart_values, color_space, image_path, tolerance=0.05):
+def validate_color_chart(image, chart_values, color_space, image_path, logger, tolerance=0.05):
     """Check the color accuracy of an image based on a color chart."""
     passed, failed, total_accuracy = 0, 0, 0
 
@@ -219,7 +195,6 @@ def validate_color_chart(image, chart_values, color_space, image_path, tolerance
     logger.info(f"Overall accuracy: {overall_accuracy:.2%}")
 
     # Create a visualisation for the current color space
-    output_path = f'result_{color_space}.png'  # filename based on color space
     visualize_color_chart(image, chart_values, color_space, image_path)
 
     return passed, failed, overall_accuracy, chart_values
@@ -236,32 +211,31 @@ def configure_loggers(color_space):
     return loggers[color_space]
 
 
-def visualize_validation(image, chart_values):
-    output_path = "results/"
-    visualize_color_chart(image, chart_values, output_path)
+def visualize_validation(image, chart_values, color_space, image_path):
+    """Visualize a color chart as an image."""
+    visualize_color_chart(image, chart_values, color_space, image_path)
 
 
 def validate_single_image(image_path, color_space):
     # Fetch the appropriate logger
-    global logger
     logger = configure_logger(color_space)
 
     if color_space == "rgb":
-        image = load_image_rgb(image_path)
+        image = load_image_rgb(image_path, logger)
         color_chart_values = rgb_color_chart_values
     elif color_space == "aces2065_1":
-        image = load_image_aces(image_path)
+        image = load_image_aces(image_path, logger)
         color_chart_values = aces2065_1_color_chart_values
     elif color_space == "itu2020":
-        image = load_image_itu2020(image_path)
+        image = load_image_itu2020(image_path, logger)
         color_chart_values = itu_r_bt_2020_color_chart_values
     elif color_space == "itu709":
-        image = load_image_itu709(image_path)
+        image = load_image_itu709(image_path, logger)
         color_chart_values = itu_r_bt_709_color_chart_values
     else:
         raise ValueError(f"Unknown color space: {color_space}")
 
-    passed, failed, accuracy, chart_values = validate_color_chart(image, color_chart_values, color_space, image_path)
+    passed, failed, accuracy, chart_values = validate_color_chart(image, color_chart_values, color_space, image_path, logger)
     if passed == len(color_chart_values):
         logger.info("Image passed the color check.")
     else:
