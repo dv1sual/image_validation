@@ -1,19 +1,34 @@
-import cv2
-import numpy as np
-from PIL import Image
-from color_charts_values.RGB_color_chart_values import color_chart_values
-import os
-from logger_config import configure_logger
+import cv2  # For image processing
+import numpy as np  # For array operations
+from PIL import Image  # For image processing
+import os  # For handling file paths
+from logger_config import configure_logger  # For logging configuration
+import json  # For handling JSON files
 
 # Create a logger for the module
-logger = configure_logger(__name__)
+logger = configure_logger('rgb', 'rgb.log')
+
+# Load color chart values from a JSON file
+try:
+    with open('color_charts_values/color_chart_values.json', 'r') as file:
+        color_charts = json.load(file)
+except Exception as json_load_exception:
+    logger.error(f"Failed to load color chart values: {json_load_exception}")
+    raise
+
+color_chart_values = color_charts['RGB_color_chart_values']
 
 
 def load_image(image_path):
     """
     Load an image using PIL and print info messages.
     """
-    image = Image.open(image_path)
+    try:
+        image = Image.open(image_path)
+    except Exception as image_load_exception:
+        logger.error(f"Failed to load image: {image_load_exception}")
+        raise
+
     filename = os.path.basename(image_path)
     logger.info("RGB Color Check")
     logger.info("Loading image, please wait...")
@@ -40,11 +55,10 @@ def validate_color_chart(image, chart_values):
 
         results.append((color_patch, accuracy))
 
-    for color_patch, accuracy in results:
-        if accuracy < 99.50:
-            logger.error("Color patch {} failed validation with accuracy {:.2f}%".format(color_patch, accuracy))
-        else:
-            logger.info("Color patch {} passed validation with accuracy {:.2f}%".format(color_patch, accuracy))
+        logger.info("Color name: {}".format(color_patch['name']))
+        logger.info("Expected RGB: [{:.3f}, {:.3f}, {:.3f}]".format(*[value/255 for value in expected_rgb]))
+        logger.info("Actual RGB: {}".format(actual_rgb/255))
+        logger.info("Accuracy: {:.2f}%".format(accuracy))
 
     passed_checks = [result for result in results if result[1] >= 99.50]
     failed_checks = [result for result in results if result[1] < 99.50]
@@ -66,13 +80,6 @@ def calculate_accuracy(expected_rgb, actual_rgb):
     max_differences = np.array([255, 255, 255])
     accuracy = 100 - (np.mean(differences / max_differences) * 100)
     return accuracy
-
-
-def put_vertical_text(img, text, org, font, font_scale, color, thickness):
-    y = org[1]
-    for value in text:
-        cv2.putText(img, str(value), (org[0], y), font, font_scale, color, thickness)
-        y += int(cv2.getTextSize(str(value), font, font_scale, thickness)[0][1] * 1.5)
 
 
 def visualize_color_chart(image, chart_values, output_filename):
@@ -104,8 +111,16 @@ def visualize_color_chart(image, chart_values, output_filename):
         font = cv2.FONT_HERSHEY_SIMPLEX
         font_scale = 0.5
         font_thickness = 1
-        put_vertical_text(canvas, expected_rgb, (155, top + 20), font, font_scale, text_color, font_thickness)
-        put_vertical_text(canvas, actual_rgb, (355, top + 20), font, font_scale, text_color, font_thickness)
+
+        y = top + 20
+        for value in expected_rgb:
+            cv2.putText(canvas, str(value), (155, y), font, font_scale, text_color, font_thickness)
+            y += int(cv2.getTextSize(str(value), font, font_scale, font_thickness)[0][1] * 1.5)
+
+        y = top + 20
+        for value in actual_rgb:
+            cv2.putText(canvas, str(value), (355, y), font, font_scale, text_color, font_thickness)
+            y += int(cv2.getTextSize(str(value), font, font_scale, font_thickness)[0][1] * 1.5)
 
     # Save the visualization to a file
     cv2.imwrite(output_filename, canvas)
@@ -115,6 +130,11 @@ def main():
     # Load the image from a file
     input_image_path = 'image_charts/RGB_1920_1080.tif'
     image = load_image(input_image_path)
+    logger.info("RGB Color Check")
+    logger.info("Loading image...")
+    logger.info(f"Successfully loaded {os.path.basename(input_image_path)}")
+    logger.info("Color checking starting...")
+
     validation_result = validate_color_chart(image, color_chart_values)
 
     # Create the output filename and save the visualization to a specific folder

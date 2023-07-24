@@ -1,9 +1,7 @@
-# logger_config.py
 import logging
 import os
 
-
-def configure_logger(name):
+def configure_logger(name, log_filename):
     """
     This function sets up a logger with name "name" and returns it.
     The logger logs messages both to the console and a log file.
@@ -14,7 +12,7 @@ def configure_logger(name):
     # Make sure we don't have duplicate handlers if executed more times
     if not logger.handlers:
         # Create file handler which logs even debug messages
-        fh = logging.FileHandler('logs/logfile.log', mode='w')
+        fh = logging.FileHandler(os.path.join('logs', log_filename), mode='w')
         fh.setLevel(logging.INFO)
 
         # Create console handler with a higher log level
@@ -31,3 +29,4 @@ def configure_logger(name):
         logger.addHandler(ch)
 
     return logger
+
