@@ -1,40 +1,39 @@
-# Image Color Accuracy Validation Script
+# Color Accuracy Validation
 
-## Overview
+This Python script validates the color accuracy of images in different color spaces (RGB, ACES2065-1, ITU2020) based on specified color charts. The color chart values are loaded from a JSON file, and each image's color accuracy is evaluated based on these charts.
 
-This script is designed to validate the color accuracy of images based on a provided color chart. It accepts images in various formats, including .exr, and returns a visual representation of the results, which showcases the expected vs actual colors and their accuracy. The accuracy is calculated based on the difference between the actual and expected RGB values.
+## Dependencies
 
-## Prerequisites
+The script depends on several Python libraries:
 
-Python 3.6 or later
-
-OpenCV for Python (pip install opencv-python)
-
-numpy (pip install numpy)
-
-Pillow (pip install Pillow)
-
-OpenEXR (pip install OpenEXR)
-
-Imath (pip install imath)
-
-## Python packages:
-
-cv2: For image processing.
-
-numpy: For array operations.
-
-PIL (Pillow): For opening image files.
-
-OpenEXR: For opening EXR files.
-
-Imath: For handling EXR files.
-
-It also requires a color chart values, which can be found in the color_charts_values directory.
+- cv2
+- numpy
+- PIL
+- OpenEXR
+- Imath
+- os
+- json
+- argparse
 
 ## Usage
-To use the image color accuracy validation script, follow these steps:
 
-Ensure that the prerequisites are installed and the required color chart values are in the correct directory.
-In your Python environment, run the script with python <script_name>.py.
-The script will load the image, validate it against the color chart, and save a visualization of the results in the results directory. The visualization shows the expected and actual colors and their accuracy.
+The script can be run from the command line as follows:
+
+python color_accuracy_validation.py --image_path /path/to/your/image.file --color_space rgb
+
+This will run the color accuracy validation on the specified image file in the RGB color space.
+
+You can specify a different color space by changing the 'color_space' argument to 'aces2065_1' or 'itu2020'.
+
+If no arguments are provided, the script will run the color accuracy validation for all color spaces on a set of default image paths.
+
+## Color Accuracy Validation
+
+The color accuracy validation is based on a color chart for each color space. Each color chart is specified in the 'color_charts_values/color_chart_values.json' file.
+
+The script evaluates the color accuracy of an image by comparing the actual RGB values at each color patch location with the expected RGB values from the color chart. The accuracy is calculated as 1 minus the Euclidean distance between the expected and actual RGB values, divided by the maximum possible distance.
+
+## Logging
+
+The script logs messages about the loading and validation process to the console and to separate log files for each color space. The log files are located in the 'logs' directory and are named according to the color space and the timestamp of the run (e.g., 'rgb.log').
+
