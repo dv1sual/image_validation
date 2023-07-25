@@ -4,9 +4,14 @@ from PIL import Image  # For image processing
 import OpenEXR  # For opening EXR files
 import Imath  # For handling EXR files
 import os  # For handling file paths
+import pathlib  # For handling pathlib files
 import logging  # For logging
 from utils.logger_config import configure_logger  # For logging configuration
 import json  # For handling JSON files
+from datetime import datetime  # For handling datetime
+
+
+loggers = {}
 
 
 class ColorChecker:
@@ -221,34 +226,44 @@ class ColorChecker:
     @staticmethod
     def configure_logger():
         """
-        Configures and returns a logger.
-
-        :return: A logger configured for the application.
-        :rtype: logging.Logger
+        This function sets up a logger with name "color_checker" and returns it.
+        The logger logs messages both to the console and a log file.
+        If the logger already exists, it is returned as is.
         """
-        logger = logging.getLogger('color_checker')  # Get a logger named 'color_checker'
+        logger_name = 'color_checker'
+        if logger_name in loggers:
+            return loggers[logger_name]
 
-        if not logger.handlers:  # This check avoids adding handlers if they already exist
-            logger.setLevel(logging.INFO)  # Set the log level to INFO
+        logger = logging.getLogger(logger_name)
+        logger.setLevel(logging.INFO)
 
-            # Create a file handler
-            handler = logging.FileHandler('logs/color_checker.log')
-            handler.setLevel(logging.INFO)
+        # Create logs directory if it doesn't exist
+        script_dir = pathlib.Path(__file__).parent.absolute()
+        log_directory = os.path.join(script_dir, 'logs')
+        os.makedirs(log_directory, exist_ok=True)
 
-            # Create a logging format
-            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-            handler.setFormatter(formatter)
+        # Create file handler which logs even debug messages
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')  # get the current timestamp without milliseconds
+        log_filename = f"{timestamp}_{logger_name}.log"  # prepend the timestamp to the filename
+        fh = logging.FileHandler(os.path.join(log_directory, log_filename), mode='w')
+        fh.setLevel(logging.INFO)
 
-            # Add the handler to the logger
-            logger.addHandler(handler)
+        # Create console handler with a higher log level
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.INFO)
 
-            # Create a stream handler to print the logs on the console
-            console_handler = logging.StreamHandler()
-            console_handler.setLevel(logging.INFO)
-            console_handler.setFormatter(formatter)
+        # Create formatter and add it to the handlers
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                                      datefmt='%Y-%m-%d %H:%M:%S')
+        fh.setFormatter(formatter)
+        ch.setFormatter(formatter)
 
-            # Add the console handler to the logger
-            logger.addHandler(console_handler)
+        # Add the handlers to logger
+        logger.addHandler(fh)
+        logger.addHandler(ch)
+
+        # Store the logger for reuse
+        loggers[logger_name] = logger
 
         return logger
 
