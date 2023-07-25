@@ -5,6 +5,7 @@ import os
 
 loggers = {}
 
+
 def configure_logger(name):
     """
     This function sets up a logger with name "name" and returns it.

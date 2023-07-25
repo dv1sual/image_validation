@@ -248,7 +248,7 @@ def main():
         ('image_charts/ACES2065_1_1920_1080.exr', 'aces2065_1'),
         ('image_charts/ITU-R_BT.2020.exr', 'itu2020'),
         ('image_charts/ITU-R_BT.709.exr', 'itu709'),
-        ('image_charts/RGB_1920_1080.tif', 'rgb')
+        ('image_charts/RGB.tif', 'rgb')
     ]
 
     for image_path, color_space in image_color_space_pairs:

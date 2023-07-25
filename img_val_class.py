@@ -370,7 +370,7 @@ def main():
     It initializes the ColorChecker object for each color space and executes the color check by calling the run method.
     This function does not take any parameters or return any values.
     """
-    rgb_checker = ColorChecker('image_charts/RGB_1920_1080.tif', 'rgb')
+    rgb_checker = ColorChecker('image_charts/RGB.tif', 'rgb')
     aces_checker = ColorChecker('image_charts/ACES2065_1_1920_1080.exr', 'aces2065_1')
     itu2020_checker = ColorChecker('image_charts/ITU-R_BT.2020.exr', 'itu2020')
     itu709_checker = ColorChecker('image_charts/ITU-R_BT.709.exr', 'itu709')
