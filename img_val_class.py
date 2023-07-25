@@ -26,7 +26,7 @@ class ColorChecker:
         try:
             with open('color_charts_values/color_chart_values.json', 'r') as file:
                 self.color_charts = json.load(file)
-            with open('utils/color_space_config.json', 'r') as file:
+            with open('config/color_space_config.json', 'r') as file:
                 self.color_space_config = json.load(file)
         except Exception as e:
             self.logger.error(f"Failed to load color chart values or color space config: {str(e)}")
