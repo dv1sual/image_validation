@@ -21,7 +21,7 @@ class ColorChecker:
         """
         self.image_path = image_path
         self.color_space = color_space
-        self.logger = self.configure_logger(color_space)
+        self.logger = self.configure_logger()
 
         try:
             with open('color_charts_values/color_chart_values.json', 'r') as file:
@@ -219,23 +219,38 @@ class ColorChecker:
             raise
 
     @staticmethod
-    def configure_logger(color_space):
+    def configure_logger():
         """
-        Configures and returns a logger for the specified color space.
+        Configures and returns a logger.
 
-        :param color_space: The color space for which to configure the logger. Should be one of 'rgb', 'aces2065_1', 'itu2020', 'itu709'.
-        :type color_space: str
-        :return: A logger configured for the specified color space.
+        :return: A logger configured for the application.
         :rtype: logging.Logger
         """
-        loggers = {
-            'rgb': configure_logger('rgb'),
-            'aces2065_1': configure_logger('aces2065_1'),
-            'itu2020': configure_logger('itu2020'),
-            'itu709': configure_logger('itu709'),
-            'adobe_rgb': configure_logger('adobe_rgb')
-        }
-        return loggers[color_space]
+        logger = logging.getLogger('color_checker')  # Get a logger named 'color_checker'
+
+        if not logger.handlers:  # This check avoids adding handlers if they already exist
+            logger.setLevel(logging.INFO)  # Set the log level to INFO
+
+            # Create a file handler
+            handler = logging.FileHandler('logs/color_checker.log')
+            handler.setLevel(logging.INFO)
+
+            # Create a logging format
+            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            handler.setFormatter(formatter)
+
+            # Add the handler to the logger
+            logger.addHandler(handler)
+
+            # Create a stream handler to print the logs on the console
+            console_handler = logging.StreamHandler()
+            console_handler.setLevel(logging.INFO)
+            console_handler.setFormatter(formatter)
+
+            # Add the console handler to the logger
+            logger.addHandler(console_handler)
+
+        return logger
 
     def run(self):
         """
