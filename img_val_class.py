@@ -56,16 +56,18 @@ class ColorChecker:
                                            channel_str in [r_str, g_str, b_str]]
         return np.dstack((r_channel, g_channel, b_channel))
 
-    def load_image_aces(self, image_path, logger):
+    def load_image(self, image_path, logger, is_exr):
         """
-        Load an ACES image file and return it as a numpy array. If the image file
+        Load an image file and return it as a numpy array. If the image file
         is not an EXR file, it raises a ValueError. It logs the progress of loading
         the image and the start of the color checking process.
 
-        :param image_path: The path to the ACES image file.
+        :param image_path: The path to the image file.
         :type image_path: str
         :param logger: The logger to log the progress.
         :type logger: logging.Logger
+        :param is_exr: Whether the image is an EXR file.
+        :type is_exr: bool
         :return: The image data as a numpy array.
         :rtype: numpy.ndarray
         :raises FileNotFoundError: If the image file does not exist.
@@ -76,130 +78,28 @@ class ColorChecker:
                 raise FileNotFoundError(f"The image file {image_path} does not exist.")
 
             filename = os.path.basename(image_path)
-            logger.info("ACES2065_1 Color Check")
+            logger.info(f"{self.color_space} Color Check")
             logger.info("Loading image...")
 
-            if image_path.lower().endswith(".exr"):
-                image = self.load_exr_image(image_path)
-                logger.info(f"Successfully loaded {filename}")
+            if is_exr:
+                if image_path.lower().endswith(".exr"):
+                    image = self.load_exr_image(image_path)
+                    logger.info(f"Successfully loaded {filename}")
+                else:
+                    logger.error(f"Loading non-EXR file for {self.color_space}: {image_path}")
+                    raise ValueError(f"Non-EXR file provided for {self.color_space} color chart: {image_path}")
             else:
-                logger.error(f"Loading non-EXR file for ACES: {image_path}")
-                raise ValueError(f"Non-EXR file provided for ACES color chart: {image_path}")
+                image = Image.open(image_path)
+                image = np.array(image)  # convert PIL Image to numpy array
+                # Normalize the image array values to the range 0.0 - 1.0 if they aren't already
+                if np.max(image) > 1.0:
+                    image = image / 255.0
 
             logger.info("Color checking starting...")
             return image
         except Exception as e:
-            logger.error(f"Failed to load ACES image: {str(e)}")
+            logger.error(f"Failed to load {self.color_space} image: {str(e)}")
             raise
-
-    def load_image_itu2020(self, image_path, logger):
-        """
-        Load an ITU2020 image file and return it as a numpy array. If the image file
-        is not an EXR file, it raises a ValueError. It logs the progress of loading
-        the image and the start of the color checking process.
-
-        :param image_path: The path to the ITU2020 image file.
-        :type image_path: str
-        :param logger: The logger to log the progress.
-        :type logger: logging.Logger
-        :return: The image data as a numpy array.
-        :rtype: numpy.ndarray
-        :raises FileNotFoundError: If the image file does not exist.
-        :raises ValueError: If the image file is not an EXR file.
-        """
-        try:
-            if not os.path.isfile(image_path):
-                raise FileNotFoundError(f"The image file {image_path} does not exist.")
-
-            filename = os.path.basename(image_path)
-            logger.info("ITU-R_BT.2020 Color Check")
-            logger.info("Loading image...")
-
-            if image_path.lower().endswith(".exr"):
-                image = self.load_exr_image(image_path)
-                logger.info(f"Successfully loaded {filename}")
-            else:
-                logger.error(f"Loading non-EXR file for ITU2020: {image_path}")
-                raise ValueError(f"Non-EXR file provided for ITU2020 color chart: {image_path}")
-
-            logger.info("Color checking starting...")
-            return image
-        except Exception as e:
-            logger.error(f"Failed to load ITU2020 image: {str(e)}")
-            raise
-
-    def load_image_itu709(self, image_path, logger):
-        """
-        Load an ITU709 image file and return it as a numpy array. If the image file
-        is not an EXR file, it raises a ValueError. It logs the progress of loading
-        the image and the start of the color checking process.
-
-        :param image_path: The path to the ITU709 image file.
-        :type image_path: str
-        :param logger: The logger to log the progress.
-        :type logger: logging.Logger
-        :return: The image data as a numpy array.
-        :rtype: numpy.ndarray
-        :raises FileNotFoundError: If the image file does not exist.
-        :raises ValueError: If the image file is not an EXR file.
-        """
-        try:
-            if not os.path.isfile(image_path):
-                raise FileNotFoundError(f"The image file {image_path} does not exist.")
-
-            filename = os.path.basename(image_path)
-            logger.info("ITU-R_BT.709 Color Check")
-            logger.info("Loading image...")
-
-            if image_path.lower().endswith(".exr"):
-                image = self.load_exr_image(image_path)
-                logger.info(f"Successfully loaded {filename}")
-            else:
-                logger.error(f"Loading non-EXR file for ITU709: {image_path}")
-                raise ValueError(f"Non-EXR file provided for ITU709 color chart: {image_path}")
-
-            logger.info("Color checking starting...")
-            return image
-        except Exception as e:
-            logger.error(f"Failed to load ITU709 image: {str(e)}")
-            raise
-
-    @staticmethod
-    def load_image_rgb(image_path, logger):
-        """
-        Load an RGB image file and return it as a numpy array. The image data is
-        normalized to the range 0.0 - 1.0 if it isn't already. It logs the progress
-        of loading the image and the start of the color checking process.
-
-        :param image_path: The path to the RGB image file.
-        :type image_path: str
-        :param logger: The logger to log the progress.
-        :type logger: logging.Logger
-        :return: The image data as a numpy array.
-        :rtype: numpy.ndarray
-        :raises FileNotFoundError: If the image file does not exist.
-        :raises Exception: If an error occurred during loading the image.
-        """
-        try:
-            if not os.path.isfile(image_path):
-                raise FileNotFoundError(f"The image file {image_path} does not exist.")
-
-            filename = os.path.basename(image_path)
-            logger.info("RGB Color Check")
-            logger.info("Loading image, please wait...")
-
-            image = Image.open(image_path)
-            image = np.array(image)  # convert PIL Image to numpy array
-            # Normalize the image array values to the range 0.0 - 1.0 if they aren't already
-            if np.max(image) > 1.0:
-                image = image / 255.0
-        except Exception as image_load_exception:
-            logger.error(f"Failed to load image: {image_load_exception}")
-            raise
-
-        logger.info(f"Successfully loaded {filename}")
-        logger.info(f"Color checking starting...")
-        return image
 
     @staticmethod
     def visualize_color_chart(image, chart_values, color_space, image_path):
@@ -332,7 +232,8 @@ class ColorChecker:
             'rgb': configure_logger('rgb'),
             'aces2065_1': configure_logger('aces2065_1'),
             'itu2020': configure_logger('itu2020'),
-            'itu709': configure_logger('itu709')
+            'itu709': configure_logger('itu709'),
+            'adobe_rgb': configure_logger('adobe_rgb')
         }
         return loggers[color_space]
 
@@ -351,8 +252,7 @@ class ColorChecker:
         logger = self.logger
         config = self.color_space_config[self.color_space]
 
-        load_image_method = getattr(self, config['load_image'])
-        image = load_image_method(self.image_path, logger)
+        image = self.load_image(self.image_path, logger, config['is_exr'])
         color_chart_values = self.color_charts[config['color_chart_values']]
 
         passed, failed, accuracy, chart_values = self.validate_color_chart(image, color_chart_values, self.color_space,
@@ -374,9 +274,10 @@ def main():
     aces_checker = ColorChecker('image_charts/ACES2065_1_1920_1080.exr', 'aces2065_1')
     itu2020_checker = ColorChecker('image_charts/ITU-R_BT.2020.exr', 'itu2020')
     itu709_checker = ColorChecker('image_charts/ITU-R_BT.709.exr', 'itu709')
+    adobe_rgb_checker = ColorChecker('image_charts/Adobe_RGB_(1998).exr', 'adobe_rgb')
 
     # Run the color check for each color space
-    for checker in [rgb_checker, aces_checker, itu2020_checker, itu709_checker]:
+    for checker in [rgb_checker, aces_checker, itu2020_checker, itu709_checker, adobe_rgb_checker]:
         checker.run()
 
 
