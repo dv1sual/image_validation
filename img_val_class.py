@@ -265,16 +265,20 @@ class ColorChecker:
 
 def main():
     """
-    Main driver function to perform color checking for all color spaces (RGB, ACES, ITU2020, ITU709).
+    Main driver function to perform color checking for all color spaces (RGB, ACES, ITU2020, ITU709, Adobe RGB).
 
     It initializes the ColorChecker object for each color space and executes the color check by calling the run method.
     This function does not take any parameters or return any values.
     """
-    rgb_checker = ColorChecker('image_charts/RGB.tif', 'rgb')
-    aces_checker = ColorChecker('image_charts/ACES2065_1_1920_1080.exr', 'aces2065_1')
-    itu2020_checker = ColorChecker('image_charts/ITU-R_BT.2020.exr', 'itu2020')
-    itu709_checker = ColorChecker('image_charts/ITU-R_BT.709.exr', 'itu709')
-    adobe_rgb_checker = ColorChecker('image_charts/Adobe_RGB_(1998).exr', 'adobe_rgb')
+    with open('config/images_path_config.json', 'r') as file:
+        config = json.load(file)
+
+    # Initialize the ColorChecker object for each color space
+    rgb_checker = ColorChecker(config['images']['rgb'], 'rgb')
+    aces_checker = ColorChecker(config['images']['aces2065_1'], 'aces2065_1')
+    itu2020_checker = ColorChecker(config['images']['itu2020'], 'itu2020')
+    itu709_checker = ColorChecker(config['images']['itu709'], 'itu709')
+    adobe_rgb_checker = ColorChecker(config['images']['adobe_rgb'], 'adobe_rgb')
 
     # Run the color check for each color space
     for checker in [rgb_checker, aces_checker, itu2020_checker, itu709_checker, adobe_rgb_checker]:
