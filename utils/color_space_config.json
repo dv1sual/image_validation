@@ -1,0 +1,18 @@
+{
+    "rgb": {
+        "load_image": "load_image_rgb",
+        "color_chart_values": "RGB_color_chart_values"
+    },
+    "aces2065_1": {
+        "load_image": "load_image_aces",
+        "color_chart_values": "aces2065_1_color_chart_values"
+    },
+    "itu2020": {
+        "load_image": "load_image_itu2020",
+        "color_chart_values": "itu_r_bt_2020_color_chart_values"
+    },
+    "itu709": {
+        "load_image": "load_image_itu709",
+        "color_chart_values": "itu_r_bt_709_color_chart_values"
+    }
+}

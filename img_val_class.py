@@ -26,9 +26,14 @@ class ColorChecker:
         try:
             with open('color_charts_values/color_chart_values.json', 'r') as file:
                 self.color_charts = json.load(file)
+            with open('utils/color_space_config.json', 'r') as file:
+                self.color_space_config = json.load(file)
         except Exception as e:
-            self.logger.error(f"Failed to load color chart values: {str(e)}")
+            self.logger.error(f"Failed to load color chart values or color space config: {str(e)}")
             raise
+
+        if self.color_space not in self.color_space_config:
+            raise ValueError(f"Unknown color space: {self.color_space}")
 
     @staticmethod
     def load_exr_image(image_path):
@@ -344,21 +349,11 @@ class ColorChecker:
         If the color space is not recognized, the method will raise a ValueError.
         """
         logger = self.logger
+        config = self.color_space_config[self.color_space]
 
-        if self.color_space == "rgb":
-            image = self.load_image_rgb(self.image_path, logger)
-            color_chart_values = self.color_charts['RGB_color_chart_values']
-        elif self.color_space == "aces2065_1":
-            image = self.load_image_aces(self.image_path, logger)
-            color_chart_values = self.color_charts['aces2065_1_color_chart_values']
-        elif self.color_space == "itu2020":
-            image = self.load_image_itu2020(self.image_path, logger)
-            color_chart_values = self.color_charts['itu_r_bt_2020_color_chart_values']
-        elif self.color_space == "itu709":
-            image = self.load_image_itu709(self.image_path, logger)
-            color_chart_values = self.color_charts['itu_r_bt_709_color_chart_values']
-        else:
-            raise ValueError(f"Unknown color space: {self.color_space}")
+        load_image_method = getattr(self, config['load_image'])
+        image = load_image_method(self.image_path, logger)
+        color_chart_values = self.color_charts[config['color_chart_values']]
 
         passed, failed, accuracy, chart_values = self.validate_color_chart(image, color_chart_values, self.color_space,
                                                                            self.image_path, logger)
