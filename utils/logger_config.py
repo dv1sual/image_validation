@@ -12,25 +12,22 @@ def configure_logger(name):
     """
 
     logger = logging.getLogger(name)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
 
     # Create logs directory if it doesn't exist
     script_dir = pathlib.Path(__file__).parent.absolute()
     log_directory = os.path.join(script_dir, 'logs')
     os.makedirs(log_directory, exist_ok=True)
 
-    print(f'Log directory: {log_directory}')  # Print the log directory
-    print(f'Directory exists: {os.path.exists(log_directory)}')  # Check if the directory exists
-
     # Create file handler which logs even debug messages
     timestamp = datetime.now().strftime('%Y%m%d%H%M%S')  # get the current timestamp without milliseconds
     log_filename = f"{timestamp}_{name}.log"  # prepend the timestamp to the filename
     fh = logging.FileHandler(os.path.join(log_directory, log_filename), mode='w')
-    fh.setLevel(logging.INFO)
+    fh.setLevel(logging.DEBUG)  # Change this to DEBUG
 
     # Create console handler with a higher log level
     ch = logging.StreamHandler()
-    ch.setLevel(logging.INFO)
+    ch.setLevel(logging.DEBUG)  # Change this to DEBUG
 
     # Create formatter and add it to the handlers
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -43,3 +40,4 @@ def configure_logger(name):
     logger.addHandler(ch)
 
     return logger
+

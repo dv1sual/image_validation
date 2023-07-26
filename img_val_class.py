@@ -65,30 +65,20 @@ class ColorChecker:
         Load an image file and return it as a numpy array. If the image file
         is not an EXR file, it raises a ValueError. It logs the progress of loading
         the image and the start of the color checking process.
-
-        :param image_path: The path to the image file.
-        :type image_path: str
-        :param logger: The logger to log the progress.
-        :type logger: logging.Logger
-        :param is_exr: Whether the image is an EXR file.
-        :type is_exr: bool
-        :return: The image data as a numpy array.
-        :rtype: numpy.ndarray
-        :raises FileNotFoundError: If the image file does not exist.
-        :raises ValueError: If the image file is not an EXR file.
         """
         try:
             if not os.path.isfile(image_path):
+                logger.error(f"The image file {image_path} does not exist.")
                 raise FileNotFoundError(f"The image file {image_path} does not exist.")
 
             filename = os.path.basename(image_path)
             logger.info(f"{self.color_space} Color Check")
-            logger.info("Loading image...")
+            logger.debug("Loading image...")
 
             if is_exr:
                 if image_path.lower().endswith(".exr"):
                     image = self.load_exr_image(image_path)
-                    logger.info(f"Successfully loaded {filename}")
+                    logger.debug(f"Successfully loaded {filename}")
                 else:
                     logger.error(f"Loading non-EXR file for {self.color_space}: {image_path}")
                     raise ValueError(f"Non-EXR file provided for {self.color_space} color chart: {image_path}")
@@ -98,8 +88,9 @@ class ColorChecker:
                 # Normalize the image array values to the range 0.0 - 1.0 if they aren't already
                 if np.max(image) > 1.0:
                     image = image / 255.0
+                logger.debug(f"Successfully loaded {filename}")
 
-            logger.info("Color checking starting...")
+            logger.debug("Color checking starting...")
             return image
         except Exception as e:
             logger.error(f"Failed to load {self.color_space} image: {str(e)}")
@@ -265,7 +256,7 @@ class ColorChecker:
             return loggers[logger_name]
 
         logger = logging.getLogger(logger_name)
-        logger.setLevel(logging.INFO)
+        logger.setLevel(logging.DEBUG)
 
         # Create logs directory if it doesn't exist
         script_dir = pathlib.Path(__file__).parent.absolute()
@@ -276,11 +267,11 @@ class ColorChecker:
         timestamp = datetime.now().strftime('%Y%m%d%H%M%S')  # get the current timestamp without milliseconds
         log_filename = f"{timestamp}_{logger_name}.log"  # prepend the timestamp to the filename
         fh = logging.FileHandler(os.path.join(log_directory, log_filename), mode='w')
-        fh.setLevel(logging.INFO)
+        fh.setLevel(logging.DEBUG)
 
         # Create console handler with a higher log level
         ch = logging.StreamHandler()
-        ch.setLevel(logging.INFO)
+        ch.setLevel(logging.DEBUG)
 
         # Create formatter and add it to the handlers
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s',
