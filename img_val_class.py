@@ -10,7 +10,6 @@ from utils.logger_config import configure_logger  # For logging configuration
 import json  # For handling JSON files
 from datetime import datetime  # For handling datetime
 
-
 loggers = {}
 
 
@@ -163,12 +162,41 @@ class ColorChecker:
 
             cv2.imwrite(output_path, canvas_vis)
 
+    @staticmethod
+    def calculate_accuracy(expected_rgb, actual_rgb):
+        """
+        Calculates the accuracy of a color based on the Euclidean distance between the expected and actual RGB values.
+
+        :param expected_rgb: The expected RGB values.
+        :type expected_rgb: numpy.ndarray
+        :param actual_rgb: The actual RGB values.
+        :type actual_rgb: numpy.ndarray
+        :return: The accuracy of the color.
+        :rtype: float
+        """
+        distance = np.linalg.norm(expected_rgb - actual_rgb)
+        max_distance = np.linalg.norm([255, 255, 255])
+        accuracy = 1 - (distance / max_distance)
+        return accuracy
+
+    @staticmethod
+    def check_pass_fail(accuracy, tolerance=0.05):
+        """
+        Checks if a color passes or fails based on its accuracy and a tolerance value.
+
+        :param accuracy: The accuracy of the color.
+        :type accuracy: float
+        :param tolerance: The tolerance value for determining whether a color passes or fails, default is 0.05.
+        :type tolerance: float
+        :return: True if the color passes, False if it fails.
+        :rtype: bool
+        """
+        return accuracy >= (1 - tolerance)
+
     def validate_color_chart(self, image, chart_values, color_space, image_path, logger, tolerance=0.05):
         """
         Validates the color accuracy of an image based on a color chart.
-        It calculates the Euclidean distance between the expected and actual RGB values for each color in the chart,
-        and determines whether each color passes or fails based on a tolerance value.
-        It also computes the overall accuracy of the image.
+        It determines whether each color passes or fails and computes the overall accuracy of the image.
 
         :param image: The image data as a numpy array.
         :type image: numpy.ndarray
@@ -196,17 +224,12 @@ class ColorChecker:
                 x, y = value["x"], value["y"]
                 actual_rgb = image[y, x]
 
-                # Calculate the Euclidean distance between the expected and actual RGB values
-                distance = np.linalg.norm(expected_rgb - actual_rgb)
-
-                # The maximum possible distance is the distance from black (0, 0, 0) to white (255, 255, 255)
-                max_distance = np.linalg.norm([255, 255, 255])
-
-                # Calculate accuracy as 1 - (distance / max_distance)
-                accuracy = 1 - (distance / max_distance)
-
+                # Calculate the accuracy
+                accuracy = self.calculate_accuracy(expected_rgb, actual_rgb)
                 value["accuracy"] = accuracy
-                if accuracy >= (1 - tolerance):
+
+                # Check if the color passes or fails
+                if self.check_pass_fail(accuracy, tolerance):
                     passed += 1
                     total_accuracy += accuracy
                 else:
@@ -341,9 +364,12 @@ def validate_single_image(image_path, color_space):
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser(description="Validate color accuracy of an image.")
     parser.add_argument('--image_path', type=str, help='Path to the image file.', default=None)
-    parser.add_argument('--color_space', type=str, help='Color space of the image. It should be one of "rgb", "aces2065_1", "itu2020", or "itu709".', default=None)
+    parser.add_argument('--color_space', type=str,
+                        help='Color space of the image. It should be one of "rgb", "aces2065_1", "itu2020", or "itu709".',
+                        default=None)
     args = parser.parse_args()
 
     if args.image_path is None or args.color_space is None:
