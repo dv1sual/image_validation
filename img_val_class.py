@@ -10,8 +10,6 @@ from utils.logger_config import configure_logger  # For logging configuration
 import json  # For handling JSON files
 from datetime import datetime  # For handling datetime
 
-loggers = {}
-
 
 class ColorChecker:
     def __init__(self, image_path, color_space):
@@ -25,7 +23,7 @@ class ColorChecker:
         """
         self.image_path = image_path
         self.color_space = color_space
-        self.logger = self.configure_logger()
+        self.logger = configure_logger('color_checker', pathlib.Path(__file__).parent.absolute())
 
         try:
             color_charts_file = 'color_charts_values/color_chart_values.json'
@@ -131,7 +129,11 @@ class ColorChecker:
         :type image_path: str
         """
         try:
-            canvas_height, canvas_width = 140 * len(chart_values) + 20, 500
+            with open('config/visual_config.json', 'r') as file:
+                vis_config = json.load(file)
+
+            canvas_height = vis_config['canvas_height_multiplier'] * len(chart_values) + 20
+            canvas_width = vis_config['canvas_width']
             canvas_vis = np.ones((canvas_height, canvas_width, 3), dtype=np.uint8) * 255
 
             for i, value in enumerate(chart_values):
@@ -141,7 +143,8 @@ class ColorChecker:
                                                     [expected_rgb, actual_rgb]]
 
                 accuracy_percentage = value["accuracy"] * 100
-                border_color = (0, 255, 0) if accuracy_percentage >= 99.97 else (0, 0, 255)
+                border_color = tuple(vis_config['border_color_pass']) if accuracy_percentage >= 99.97 else tuple(
+                    vis_config['border_color_fail'])
 
                 cv2.rectangle(canvas_vis, (50, top), (150, bottom), border_color, 2)
                 cv2.rectangle(canvas_vis, (250, top), (350, bottom), border_color, 2)
@@ -268,50 +271,6 @@ class ColorChecker:
             logger.error(f"Failed to validate color chart: {str(e)}")
             raise
 
-    @staticmethod
-    def configure_logger():
-        """
-        This function sets up a logger with name "color_checker" and returns it.
-        The logger logs messages both to the console and a log file.
-        If the logger already exists, it is returned as is.
-        """
-        logger_name = 'color_checker'
-        if logger_name in loggers:
-            return loggers[logger_name]
-
-        logger = logging.getLogger(logger_name)
-        logger.setLevel(logging.DEBUG)
-
-        # Create logs directory if it doesn't exist
-        script_dir = pathlib.Path(__file__).parent.absolute()
-        log_directory = os.path.join(script_dir, 'logs')
-        os.makedirs(log_directory, exist_ok=True)
-
-        # Create file handler which logs even debug messages
-        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')  # get the current timestamp without milliseconds
-        log_filename = f"{timestamp}_{logger_name}.log"  # prepend the timestamp to the filename
-        fh = logging.FileHandler(os.path.join(log_directory, log_filename), mode='w')
-        fh.setLevel(logging.DEBUG)
-
-        # Create console handler with a higher log level
-        ch = logging.StreamHandler()
-        ch.setLevel(logging.DEBUG)
-
-        # Create formatter and add it to the handlers
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                                      datefmt='%Y-%m-%d %H:%M:%S')
-        fh.setFormatter(formatter)
-        ch.setFormatter(formatter)
-
-        # Add the handlers to logger
-        logger.addHandler(fh)
-        logger.addHandler(ch)
-
-        # Store the logger for reuse
-        loggers[logger_name] = logger
-
-        return logger
-
     def run(self):
         """
         Executes the color checking process for the image with the color space specified during the object's initialization.
@@ -357,12 +316,19 @@ def main():
     To run this function from the command line, navigate to the directory containing this script and enter:
     python color_checker.py
     """
+    # Load image path configurations
     with open('config/images_path_config.json', 'r') as file:
-        config = json.load(file)
+        image_path_config = json.load(file)
 
-    color_spaces = ['rgb', 'aces2065_1', 'itu2020', 'itu709', 'adobe_rgb']
+    # Load color checker configurations
+    with open('config/color_checker_config.json', 'r') as file:
+        color_checker_config = json.load(file)
+
+    # Get color spaces from the configuration file
+    color_spaces = color_checker_config['color_spaces']
+
     for color_space in color_spaces:
-        image_path = config['images'].get(color_space)
+        image_path = image_path_config['images'].get(color_space)
         if image_path is None:
             raise ValueError(f"No image path provided for {color_space}.")
         if not os.path.isfile(image_path):

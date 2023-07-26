@@ -1,0 +1,7 @@
+{
+    "canvas_width": 500,
+    "canvas_height_multiplier": 140,
+    "canvas_height_offset": 20,
+    "border_color_pass": [0, 255, 0],
+    "border_color_fail": [0, 0, 255]
+}

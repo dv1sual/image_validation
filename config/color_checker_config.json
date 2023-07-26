@@ -1,0 +1,9 @@
+{
+    "color_spaces": [
+      "rgb",
+      "aces2065_1",
+      "itu2020",
+      "itu709",
+      "adobe_rgb"
+    ]
+}
