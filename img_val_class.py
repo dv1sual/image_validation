@@ -26,8 +26,16 @@ class ColorChecker:
         self.logger = configure_logger('color_checker', pathlib.Path(__file__).parent.absolute())
 
         try:
-            color_charts_file = 'color_charts_values/color_chart_values.json'
-            color_space_config_file = 'config/color_space_config.json'
+            with open('config/path_config.json', 'r') as file:
+                path_config = json.load(file)
+
+            with open('config/params_config.json', 'r') as file:
+                params_config = json.load(file)
+
+            self.tolerance = params_config['tolerance']
+
+            color_charts_file = path_config['color_charts_file']
+            color_space_config_file = path_config['color_space_config_file']
 
             if not os.path.isfile(color_charts_file):
                 self.logger.error(f"The file {color_charts_file} does not exist.")
@@ -209,7 +217,7 @@ class ColorChecker:
         """
         return accuracy >= (1 - tolerance)
 
-    def validate_color_chart(self, image, chart_values, color_space, image_path, logger, tolerance=0.05):
+    def validate_color_chart(self, image, chart_values, color_space, image_path, logger):
         """
         Validates the color accuracy of an image based on a color chart.
         It determines whether each color passes or fails and computes the overall accuracy of the image.
@@ -247,7 +255,7 @@ class ColorChecker:
                 value["accuracy"] = accuracy
 
                 # Check if the color passes or fails
-                if self.check_pass_fail(accuracy, tolerance):
+                if self.check_pass_fail(accuracy, self.tolerance):
                     passed += 1
                     total_accuracy += accuracy
                 else:
