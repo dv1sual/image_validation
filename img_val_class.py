@@ -28,16 +28,34 @@ class ColorChecker:
         self.logger = self.configure_logger()
 
         try:
-            with open('color_charts_values/color_chart_values.json', 'r') as file:
-                self.color_charts = json.load(file)
-            with open('config/color_space_config.json', 'r') as file:
-                self.color_space_config = json.load(file)
+            color_charts_file = 'color_charts_values/color_chart_values.json'
+            color_space_config_file = 'config/color_space_config.json'
+
+            if not os.path.isfile(color_charts_file):
+                self.logger.error(f"The file {color_charts_file} does not exist.")
+                raise FileNotFoundError(f"The file {color_charts_file} does not exist.")
+
+            if not os.path.isfile(color_space_config_file):
+                self.logger.error(f"The file {color_space_config_file} does not exist.")
+                raise FileNotFoundError(f"The file {color_space_config_file} does not exist.")
+
+            try:
+                with open(color_charts_file, 'r') as file:
+                    self.color_charts = json.load(file)
+            except json.JSONDecodeError as e:
+                self.logger.error(f"Failed to parse color chart values: {str(e)}")
+                raise
+
+            try:
+                with open(color_space_config_file, 'r') as file:
+                    self.color_space_config = json.load(file)
+            except json.JSONDecodeError as e:
+                self.logger.error(f"Failed to parse color space config: {str(e)}")
+                raise
+
         except Exception as e:
             self.logger.error(f"Failed to load color chart values or color space config: {str(e)}")
             raise
-
-        if self.color_space not in self.color_space_config:
-            raise ValueError(f"Unknown color space: {self.color_space}")
 
     @staticmethod
     def load_exr_image(image_path):
@@ -96,8 +114,7 @@ class ColorChecker:
             logger.error(f"Failed to load {self.color_space} image: {str(e)}")
             raise
 
-    @staticmethod
-    def visualize_color_chart(image, chart_values, color_space, image_path):
+    def visualize_color_chart(self, image, chart_values, color_space, image_path):
         """
         Visualize a color chart in an image, and save the visualization as a new image file.
         For each color in the chart, it draws two patches of color: one for the expected color and one for the actual color.
@@ -113,34 +130,35 @@ class ColorChecker:
         :param image_path: The path to the image file. It is used in the filename of the saved visualization.
         :type image_path: str
         """
-        canvas_height, canvas_width = 140 * len(chart_values) + 20, 500
-        canvas_vis = np.ones((canvas_height, canvas_width, 3), dtype=np.uint8) * 255
+        try:
+            canvas_height, canvas_width = 140 * len(chart_values) + 20, 500
+            canvas_vis = np.ones((canvas_height, canvas_width, 3), dtype=np.uint8) * 255
 
-        for i, value in enumerate(chart_values):
-            expected_rgb, actual_rgb = value["rgb"], image[value["y"], value["x"]]
-            top, bottom = 10 + i * 140, 10 + i * 140 + 120
-            expected_rgb_int, actual_rgb_int = [tuple([int(c * 255) for c in rgb][::-1]) for rgb in
-                                                [expected_rgb, actual_rgb]]
+            for i, value in enumerate(chart_values):
+                expected_rgb, actual_rgb = value["rgb"], image[value["y"], value["x"]]
+                top, bottom = 10 + i * 140, 10 + i * 140 + 120
+                expected_rgb_int, actual_rgb_int = [tuple([int(c * 255) for c in rgb][::-1]) for rgb in
+                                                    [expected_rgb, actual_rgb]]
 
-            accuracy_percentage = value["accuracy"] * 100
-            border_color = (0, 255, 0) if accuracy_percentage >= 99.97 else (0, 0, 255)
+                accuracy_percentage = value["accuracy"] * 100
+                border_color = (0, 255, 0) if accuracy_percentage >= 99.97 else (0, 0, 255)
 
-            cv2.rectangle(canvas_vis, (50, top), (150, bottom), border_color, 2)
-            cv2.rectangle(canvas_vis, (250, top), (350, bottom), border_color, 2)
-            cv2.rectangle(canvas_vis, (51, top + 1), (149, bottom - 1), expected_rgb_int, -1)
-            cv2.rectangle(canvas_vis, (251, top + 1), (349, bottom - 1), actual_rgb_int, -1)
+                cv2.rectangle(canvas_vis, (50, top), (150, bottom), border_color, 2)
+                cv2.rectangle(canvas_vis, (250, top), (350, bottom), border_color, 2)
+                cv2.rectangle(canvas_vis, (51, top + 1), (149, bottom - 1), expected_rgb_int, -1)
+                cv2.rectangle(canvas_vis, (251, top + 1), (349, bottom - 1), actual_rgb_int, -1)
 
-            cv2.putText(canvas_vis, value["name"], (10, top + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1,
-                        cv2.LINE_AA)
-
-            for j, color_name in enumerate(['R', 'G', 'B']):
-                expected_text = f"{color_name}: {expected_rgb[j]:.3f}"
-                actual_text = f"{color_name}: {actual_rgb[j]:.3f}"
-                y_offset = top + 20 + j * 20  # Increment y position for each color component
-                cv2.putText(canvas_vis, expected_text, (155, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1,
+                cv2.putText(canvas_vis, value["name"], (10, top + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1,
                             cv2.LINE_AA)
-                cv2.putText(canvas_vis, actual_text, (355, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1,
-                            cv2.LINE_AA)
+
+                for j, color_name in enumerate(['R', 'G', 'B']):
+                    expected_text = f"{color_name}: {expected_rgb[j]:.3f}"
+                    actual_text = f"{color_name}: {actual_rgb[j]:.3f}"
+                    y_offset = top + 20 + j * 20  # Increment y position for each color component
+                    cv2.putText(canvas_vis, expected_text, (155, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1,
+                                cv2.LINE_AA)
+                    cv2.putText(canvas_vis, actual_text, (355, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1,
+                                cv2.LINE_AA)
 
             output_filename = f"{os.path.splitext(os.path.basename(image_path))[0]}_{color_space}_result.png"
             output_path = os.path.join('results', output_filename)
@@ -152,6 +170,10 @@ class ColorChecker:
                 output_path = os.path.join('results', output_filename)
 
             cv2.imwrite(output_path, canvas_vis)
+
+        except Exception as e:
+            self.logger.error(f"Failed to visualize color chart: {str(e)}")
+            raise
 
     @staticmethod
     def calculate_accuracy(expected_rgb, actual_rgb):
@@ -208,11 +230,13 @@ class ColorChecker:
             passed, failed, total_accuracy = 0, 0, 0
 
             for value in chart_values:
-                if not all(key in value for key in ["rgb", "x", "y"]):
-                    raise ValueError("Each color patch dictionary must have 'rgb', 'x', and 'y' keys.")
+                try:
+                    expected_rgb = np.array(value["rgb"])
+                    x, y = value["x"], value["y"]
+                except KeyError as e:
+                    logger.error(f"Invalid color patch dictionary, missing key: {str(e)}")
+                    raise
 
-                expected_rgb = np.array(value["rgb"])
-                x, y = value["x"], value["y"]
                 actual_rgb = image[y, x]
 
                 # Calculate the accuracy
@@ -301,10 +325,18 @@ class ColorChecker:
         If the color space is not recognized, the method will raise a ValueError.
         """
         logger = self.logger
-        config = self.color_space_config[self.color_space]
+        try:
+            config = self.color_space_config[self.color_space]
+        except KeyError as e:
+            logger.error(f"Invalid color space configuration, missing key: {str(e)}")
+            raise
 
         image = self.load_image(self.image_path, logger, config['is_exr'])
-        color_chart_values = self.color_charts[config['color_chart_values']]
+        try:
+            color_chart_values = self.color_charts[config['color_chart_values']]
+        except KeyError as e:
+            logger.error(f"Invalid color chart values, missing key: {str(e)}")
+            raise
 
         passed, failed, accuracy, chart_values = self.validate_color_chart(image, color_chart_values, self.color_space,
                                                                            self.image_path, logger)
@@ -320,19 +352,26 @@ def main():
 
     It initializes the ColorChecker object for each color space and executes the color check by calling the run method.
     This function does not take any parameters or return any values.
+
+    Usage:
+    To run this function from the command line, navigate to the directory containing this script and enter:
+    python color_checker.py
     """
     with open('config/images_path_config.json', 'r') as file:
         config = json.load(file)
 
-    # Initialize the ColorChecker object for each color space
-    rgb_checker = ColorChecker(config['images']['rgb'], 'rgb')
-    aces_checker = ColorChecker(config['images']['aces2065_1'], 'aces2065_1')
-    itu2020_checker = ColorChecker(config['images']['itu2020'], 'itu2020')
-    itu709_checker = ColorChecker(config['images']['itu709'], 'itu709')
-    adobe_rgb_checker = ColorChecker(config['images']['adobe_rgb'], 'adobe_rgb')
+    color_spaces = ['rgb', 'aces2065_1', 'itu2020', 'itu709', 'adobe_rgb']
+    for color_space in color_spaces:
+        image_path = config['images'].get(color_space)
+        if image_path is None:
+            raise ValueError(f"No image path provided for {color_space}.")
+        if not os.path.isfile(image_path):
+            raise FileNotFoundError(f"No file found at {image_path} for {color_space}.")
 
-    # Run the color check for each color space
-    for checker in [rgb_checker, aces_checker, itu2020_checker, itu709_checker, adobe_rgb_checker]:
+        # Initialize the ColorChecker object for each color space
+        checker = ColorChecker(image_path, color_space)
+
+        # Run the color check for each color space
         checker.run()
 
 
@@ -346,7 +385,17 @@ def validate_single_image(image_path, color_space):
 
     Returns:
     None
+
+    Usage:
+    To run this function from the command line, navigate to the directory containing this script and enter:
+    python color_checker.py --image_path /path/to/image --color_space rgb
     """
+    color_spaces = ['rgb', 'aces2065_1', 'itu2020', 'itu709', 'adobe_rgb']
+    if color_space not in color_spaces:
+        raise ValueError(f"Invalid color space: {color_space}. Must be one of {color_spaces}.")
+    if not os.path.isfile(image_path):
+        raise FileNotFoundError(f"No file found at {image_path}.")
+
     checker = ColorChecker(image_path, color_space)
 
     # Run the color check
