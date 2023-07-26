@@ -154,6 +154,13 @@ class ColorChecker:
 
             output_filename = f"{os.path.splitext(os.path.basename(image_path))[0]}_{color_space}_result.png"
             output_path = os.path.join('results', output_filename)
+
+            # Check if the file already exists, and if so, append a timestamp to the filename
+            if os.path.isfile(output_path):
+                timestamp = datetime.now().strftime('%Y%m%d%H%M%S')  # get the current timestamp without milliseconds
+                output_filename = f"{os.path.splitext(os.path.basename(image_path))[0]}_{color_space}_{timestamp}_result.png"
+                output_path = os.path.join('results', output_filename)
+
             cv2.imwrite(output_path, canvas_vis)
 
     def validate_color_chart(self, image, chart_values, color_space, image_path, logger, tolerance=0.05):
