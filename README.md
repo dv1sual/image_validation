@@ -1,6 +1,6 @@
 # Color Accuracy Validation
 
-This Python script validates the color accuracy of images in different color spaces (RGB, ACES2065-1, ITU2020) based on specified color charts. The color chart values are loaded from a JSON file, and each image's color accuracy is evaluated based on these charts.
+This Python script validates the color accuracy of images in different color spaces (RGB, ACES2065-1, ITU2020, ITU709, Adobe RGB) based on specified color charts. The color chart values are loaded from a JSON file, and each image's color accuracy is evaluated based on these charts.
 
 ## Dependencies
 
@@ -23,7 +23,7 @@ python color_accuracy_validation.py --image_path /path/to/your/image.file --colo
 
 This will run the color accuracy validation on the specified image file in the RGB color space.
 
-You can specify a different color space by changing the 'color_space' argument to 'aces2065_1' or 'itu2020'.
+You can specify a different color space by changing the 'color_space' argument to the desired one.
 
 If no arguments are provided, the script will run the color accuracy validation for all color spaces on a set of default image paths.
 
